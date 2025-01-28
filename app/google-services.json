@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "602184925261",
+    "project_id": "medilarm-4a30c",
+    "storage_bucket": "medilarm-4a30c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:602184925261:android:602cd26e56b3d28b41dc04",
+        "android_client_info": {
+          "package_name": "com.example.medilarm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgoUlXd2THkGhTAk3PyTj5TKqzY1xY0hw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
