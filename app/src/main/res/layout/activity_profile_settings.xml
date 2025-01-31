@@ -27,7 +27,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Edit Profile"
+        android:text="View Profile"
         android:textColor="@color/black"
         android:textSize="27dp"
         android:textStyle="bold"
@@ -58,35 +58,9 @@
         app:srcCompat="@drawable/arrow" />
 
 
-    <TextView
-        android:id="@+id/Password"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/password"
-        android:textColor="@color/black"
-        android:textSize="13sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.194"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/email_input" />
 
-    <EditText
-        android:id="@+id/password_input"
-        android:layout_width="271dp"
-        android:layout_height="44dp"
-        android:layout_marginTop="16dp"
-        android:background="@android:drawable/editbox_background_normal"
-        android:hint="@string/password"
-        android:inputType="textPassword"
-        android:padding="12dp"
-        android:textColor="@color/black"
-        android:textColorHint="#808080"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.491"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/Password" />
+
+
 
     <TextView
         android:id="@+id/Email"
@@ -118,48 +92,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/Email" />
 
-    <TextView
-        android:id="@+id/Confirm_password"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/confirm_password"
-        android:textColor="@color/black"
-        android:textSize="13sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.228"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/password_input" />
 
-    <EditText
-        android:id="@+id/Confirm_password_input"
-        android:layout_width="271dp"
-        android:layout_height="44dp"
-        android:layout_marginTop="16dp"
-        android:background="@android:drawable/editbox_background_normal"
-        android:hint="Re-enter password"
-        android:inputType="textPassword"
-        android:padding="12dp"
-        android:textColor="@color/black"
-        android:textColorHint="#808080"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.491"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/Confirm_password" />
 
-    <Button
-        android:id="@+id/btn_signIn"
-        android:layout_width="140dp"
-        android:layout_height="55dp"
-        android:layout_marginTop="32dp"
-        android:backgroundTint="#4285F4"
-        android:text="@string/save"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.488"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/Confirm_password_input" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
