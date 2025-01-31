@@ -94,7 +94,7 @@
         android:layout_height="54dp"
         android:layout_marginTop="164dp"
         android:backgroundTint="@color/white"
-        android:text="Profile Settings"
+        android:text="View Profile"
         android:textAlignment="textStart"
         android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
