@@ -8,7 +8,6 @@
     android:background="@drawable/background"
     tools:context=".Profile">
 
-
     <ImageView
         android:id="@+id/profile_bg"
         android:layout_width="wrap_content"
@@ -57,11 +56,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/arrow" />
 
-
-
-
-
-
     <TextView
         android:id="@+id/Email"
         android:layout_width="wrap_content"
@@ -74,26 +68,5 @@
         app:layout_constraintHorizontal_bias="0.166"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imageView" />
-
-    <EditText
-        android:id="@+id/email_input"
-        android:layout_width="271dp"
-        android:layout_height="44dp"
-        android:layout_marginTop="16dp"
-        android:background="@android:drawable/editbox_background_normal"
-        android:hint="Enter your email"
-        android:inputType="textEmailAddress"
-        android:padding="12dp"
-        android:textColor="@color/black"
-        android:textColorHint="#808080"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.491"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/Email" />
-
-
-
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
