@@ -52,4 +52,6 @@
         vestibulum. Fusce dictum libero quis erat maximus, vitae volutpat diam dignissim.
     </string>
     <string name="log_out">Log Out</string>
+    <string name="full_name">full Name</string>
+    <string name="name">Name</string>
 </resources>
