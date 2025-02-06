@@ -12,7 +12,8 @@ import android.os.Vibrator
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import java.util.Calendar
+import java.text.SimpleDateFormat
+import java.util.*
 
 class AlarmScreen : AppCompatActivity() {
 
@@ -22,6 +23,8 @@ class AlarmScreen : AppCompatActivity() {
 
     private lateinit var mediaPlayer: MediaPlayer
     private lateinit var vibrator: Vibrator
+    private lateinit var timeTextView: TextView
+    private lateinit var timer: Timer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +35,11 @@ class AlarmScreen : AppCompatActivity() {
 
         val txtAlarmMessage = findViewById<TextView>(R.id.alarmMessage)
         txtAlarmMessage.text = "Medicine: $medicineName, Dosage: $dosage"
+
+        // Initialize the TextView for displaying the time
+        timeTextView = findViewById(R.id.currentTime)
+        updateTime() // Initial time update
+        startTimer() // Start updating time every second
 
         // Initialize alarm sound and vibrator
         mediaPlayer = MediaPlayer.create(this, android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI)
@@ -55,12 +63,24 @@ class AlarmScreen : AppCompatActivity() {
         }
     }
 
+    private fun updateTime() {
+        val currentTime = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
+        timeTextView.text = currentTime
+    }
+
+    private fun startTimer() {
+        timer = Timer()
+        timer.scheduleAtFixedRate(object : TimerTask() {
+            override fun run() {
+                runOnUiThread { updateTime() }
+            }
+        }, 0, 1000) // Update every second
+    }
+
     private fun startVibration() {
         val pattern = longArrayOf(0, 1000, 500, 1000) // Delay, Vibrate, Pause, Repeat
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(
-                VibrationEffect.createWaveform(pattern, 0) // Repeat indefinitely
-            )
+            vibrator.vibrate(VibrationEffect.createWaveform(pattern, 0)) // Repeat indefinitely
         } else {
             vibrator.vibrate(pattern, 0)
         }
@@ -69,6 +89,7 @@ class AlarmScreen : AppCompatActivity() {
     private fun stopAlarm() {
         if (mediaPlayer.isPlaying) mediaPlayer.stop()
         vibrator.cancel()
+        timer.cancel() // Stop the timer when the alarm is stopped
     }
 
     private fun snoozeAlarm() {
