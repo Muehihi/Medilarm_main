@@ -131,6 +131,7 @@ class HomePage : AppCompatActivity() {
         val userId = currentUser?.uid ?: return
         val alarmToUpdate = alarmList[position]
 
+        // Update Firestore document with the new alarm state
         db.collection("users").document(userId).collection("alarms")
             .whereEqualTo("medicineName", alarmToUpdate.medicineName)
             .whereEqualTo("dosage", alarmToUpdate.dosage)
@@ -138,13 +139,18 @@ class HomePage : AppCompatActivity() {
             .whereEqualTo("minute", alarmToUpdate.minute)
             .get()
             .addOnSuccessListener { documents ->
-                if (!documents.isEmpty) {
-                    val documentId = documents.first().id
+                if (documents.size() > 0) {  // Corrected check to ensure there are documents
+                    val documentId = documents.documents.first().id
+                    // Update the alarm's status in Firestore
                     db.collection("users").document(userId).collection("alarms")
                         .document(documentId)
                         .update("isAlarmEnabled", isEnabled)
                         .addOnSuccessListener {
-                            Toast.makeText(this, "Alarm status updated.", Toast.LENGTH_SHORT).show()
+                            // Update the local alarm list
+                            alarmList[position].isAlarmEnabled = isEnabled
+
+                            // Notify the adapter to refresh the alarm at the given position
+                            alarmAdapter.notifyItemChanged(position)
                         }
                         .addOnFailureListener {
                             Toast.makeText(this, "Failed to update alarm status.", Toast.LENGTH_SHORT).show()
@@ -152,4 +158,8 @@ class HomePage : AppCompatActivity() {
                 }
             }
     }
+
+
+
+
 }

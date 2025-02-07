@@ -11,7 +11,13 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -25,6 +31,8 @@ class AlarmScreen : AppCompatActivity() {
     private lateinit var vibrator: Vibrator
     private lateinit var timeTextView: TextView
     private lateinit var timer: Timer
+    private lateinit var database: DatabaseReference
+    private lateinit var userId: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,10 +57,16 @@ class AlarmScreen : AppCompatActivity() {
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         startVibration()
 
+        // Firebase reference to users
+        database = FirebaseDatabase.getInstance().getReference("users")
+
+        // Get current user ID
+        userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
         // Cancel Button
         findViewById<Button>(R.id.confirmButton).setOnClickListener {
-            stopAlarm()
-            finish()
+            showConfirmationDialog(medicineName, dosage)
+
         }
 
         // Snooze Button
@@ -106,6 +120,91 @@ class AlarmScreen : AppCompatActivity() {
 
         alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
     }
+
+    private fun showConfirmationDialog(medicineName: String, dosage: String) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Confirm Medicine Intake")
+        builder.setMessage("Have you taken $medicineName?")
+
+        builder.setPositiveButton("Yes") { _, _ ->
+            updateMedicineCount(medicineName, dosage)
+            updateAlarmStatusInFirebase(medicineName, dosage, false)
+            stopAlarm()
+            finish()
+        }
+
+        builder.setNegativeButton("No") { _, _ ->
+            stopAlarm()
+            finish()
+        }
+
+        builder.show()
+    }
+
+    private fun updateMedicineCount(medicineName: String, dosage: String) {
+        val dosageInt = dosage.toIntOrNull() ?: return
+        val userMedicineRef = FirebaseFirestore.getInstance().collection("users").document(userId)
+            .collection("medicines").whereEqualTo("name", medicineName)
+
+        userMedicineRef.get().addOnSuccessListener { snapshot ->
+            if (!snapshot.isEmpty) {
+                val medicineDoc = snapshot.documents[0]
+                val currentCount = medicineDoc.getLong("count")?.toInt() ?: 0
+                val updatedCount = currentCount - dosageInt
+
+                if (updatedCount >= 0) {
+                    medicineDoc.reference.update("count", updatedCount)
+                    // Notify user if the count is below 5
+                    if (updatedCount < 5) {
+                        notifyLowMedicineCount()
+                    }
+                } else {
+                    // Handle case where count is negative (possibly notify user)
+                    Toast.makeText(this, "Not enough medicine left!", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(this, "Medicine not found in your records!", Toast.LENGTH_SHORT).show()
+            }
+        }.addOnFailureListener { exception ->
+            Toast.makeText(this, "Error updating medicine count: ${exception.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun updateAlarmStatusInFirebase(medicineName: String, dosage: String, isEnabled: Boolean) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        // Find the alarm in the Firebase collection
+        FirebaseFirestore.getInstance().collection("users").document(userId).collection("alarms")
+            .whereEqualTo("medicineName", medicineName)
+            .whereEqualTo("dosage", dosage)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) { // Use isEmpty instead of isNotEmpty
+                    val documentId = documents.documents.first().id // Get the document ID
+                    FirebaseFirestore.getInstance().collection("users").document(userId).collection("alarms")
+                        .document(documentId)
+                        .update("isAlarmEnabled", isEnabled)
+                        .addOnSuccessListener {
+                            // Optionally, notify the user or update the UI
+                        }
+                }
+            }
+
+    }
+
+
+    private fun notifyLowMedicineCount() {
+        // Show a Toast message to notify the user
+        Toast.makeText(this, "Medicine count is below 5. Please restock!", Toast.LENGTH_LONG).show()
+
+        // Optionally, show a dialog
+        AlertDialog.Builder(this)
+            .setTitle("Low Medicine Alert")
+            .setMessage("Your remaining medicine count is below 5. Please restock soon.")
+            .setPositiveButton("Okay", null)
+            .show()
+    }
+
 
     override fun onDestroy() {
         super.onDestroy()

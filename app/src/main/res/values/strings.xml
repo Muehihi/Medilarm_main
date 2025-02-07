@@ -54,4 +54,5 @@
     <string name="log_out">Log Out</string>
     <string name="full_name">full Name</string>
     <string name="name">Name</string>
+    <string name="mon">Mon</string>
 </resources>

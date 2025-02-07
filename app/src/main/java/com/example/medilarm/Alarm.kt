@@ -2,15 +2,11 @@ package com.example.medilarm
 
 import android.Manifest
 import android.app.AlarmManager
-import android.content.pm.PackageManager
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.TimePicker
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -19,7 +15,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import java.util.Calendar
+import java.util.*
 
 class Alarm : AppCompatActivity() {
 
@@ -28,9 +24,10 @@ class Alarm : AppCompatActivity() {
     }
 
     private lateinit var firestore: FirebaseFirestore
-    private lateinit var medicineNameEditText: EditText
+    private lateinit var medicineSpinner: Spinner
     private lateinit var dosageEditText: EditText
     private lateinit var timePicker: TimePicker
+    private lateinit var typeSpinner: Spinner  // Spinner for dosage type
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,16 +39,44 @@ class Alarm : AppCompatActivity() {
         val auth = FirebaseAuth.getInstance()
 
         // Initialize views
-        medicineNameEditText = findViewById(R.id.medicineName)
+        medicineSpinner = findViewById(R.id.medicineSpinner)
         dosageEditText = findViewById(R.id.dosage)
         timePicker = findViewById(R.id.timePicker)
+        typeSpinner = findViewById(R.id.type)
 
-        // Edge-to-edge setup (if needed)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+        // Fetch medicines from Firestore
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            firestore.collection("users")
+                .document(userId)
+                .collection("medicines")
+                .get()
+                .addOnSuccessListener { result ->
+                    val medicineList = mutableListOf<String>()
+                    for (document in result) {
+                        val medicineName = document.getString("name")
+                        if (medicineName != null) {
+                            medicineList.add(medicineName)
+                        }
+                    }
+                    if (medicineList.isEmpty()) {
+                        Toast.makeText(this, "No medicines found in shelf. Please add medicine.", Toast.LENGTH_LONG).show()
+                    } else {
+                        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, medicineList)
+                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                        medicineSpinner.adapter = adapter
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(this, "Error fetching medicines: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
         }
+
+        // Set up the Spinner for dosage types
+        val dosageTypes = arrayOf("Pill", "Liquid", "Injection")  // Example dosage types
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, dosageTypes)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        typeSpinner.adapter = adapter
 
         // Back button
         val btnBack: ImageView = findViewById(R.id.btn_back)
@@ -63,20 +88,21 @@ class Alarm : AppCompatActivity() {
         // Save button
         val saveButton = findViewById<Button>(R.id.btn_save)
         saveButton.setOnClickListener {
-            val medicineName = medicineNameEditText.text.toString()
+            val selectedMedicine = medicineSpinner.selectedItem.toString()
             val dosage = dosageEditText.text.toString()
+            val selectedType = typeSpinner.selectedItem.toString()
             val hour = timePicker.hour
             val minute = timePicker.minute
 
-            if (medicineName.isNotEmpty() && dosage.isNotEmpty()) {
-                // Get the currently authenticated user's ID
+            if (selectedMedicine.isNotEmpty() && dosage.isNotEmpty()) {
                 val userId = auth.currentUser?.uid
 
                 if (userId != null) {
                     // Prepare the alarm data
                     val alarmData = hashMapOf(
-                        "medicineName" to medicineName,
+                        "medicineName" to selectedMedicine,
                         "dosage" to dosage,
+                        "type" to selectedType,
                         "hour" to hour,
                         "minute" to minute
                     )
@@ -86,9 +112,8 @@ class Alarm : AppCompatActivity() {
                         .document(userId)
                         .collection("alarms")
                         .add(alarmData)
-                        .addOnSuccessListener { documentReference ->
-                            // Set the alarm
-                            setAlarm(hour, minute, medicineName, dosage)
+                        .addOnSuccessListener {
+                            setAlarm(hour, minute, selectedMedicine, dosage)
                             Toast.makeText(this, "Alarm set successfully!", Toast.LENGTH_SHORT).show()
                             val intent = Intent(this, HomePage::class.java)
                             startActivity(intent)
@@ -100,7 +125,7 @@ class Alarm : AppCompatActivity() {
                     Toast.makeText(this, "No user is signed in.", Toast.LENGTH_SHORT).show()
                 }
             } else {
-                Toast.makeText(this, "Please enter medicine name and dosage.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Please select medicine and enter dosage.", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -111,12 +136,17 @@ class Alarm : AppCompatActivity() {
         alarmIntent.putExtra("medicineName", medicineName)
         alarmIntent.putExtra("dosage", dosage)
 
-        val pendingIntent = PendingIntent.getBroadcast(this, REQUEST_CODE, alarmIntent, PendingIntent.FLAG_IMMUTABLE)
+        // Generate a unique request code based on medicineName, hour, and minute
+        val requestCode = "$medicineName$hour$minute".hashCode()
+
+        // Use the unique requestCode for the PendingIntent
+        val pendingIntent = PendingIntent.getBroadcast(this, requestCode, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
         val calendar = Calendar.getInstance()
         calendar.set(Calendar.HOUR_OF_DAY, hour)
         calendar.set(Calendar.MINUTE, minute)
         calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
 
         // If the alarm time is in the past, set it for the next day
         if (calendar.timeInMillis < System.currentTimeMillis()) {
@@ -126,6 +156,7 @@ class Alarm : AppCompatActivity() {
         // Set the alarm
         alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
     }
+
 
     private fun requestNotificationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {

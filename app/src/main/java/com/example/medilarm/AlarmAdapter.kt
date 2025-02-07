@@ -41,13 +41,13 @@ class AlarmAdapter(
         holder.amPmTextView.text = amPm
         holder.amPmTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
 
-        // Handle switch state based on whether the alarm is enabled
+        // Set switch state from the alarm's current state
         holder.alarmSwitch.isChecked = currentItem.isAlarmEnabled
 
-        // Toggle switch to enable/disable the alarm
+        // Handle switch toggle
         holder.alarmSwitch.setOnCheckedChangeListener { _, isChecked ->
             currentItem.isAlarmEnabled = isChecked
-            onToggleAlarm(position, isChecked) // Notify the activity about the change
+            onToggleAlarm(position, isChecked)
         }
 
         // Handle long press to delete
@@ -56,6 +56,7 @@ class AlarmAdapter(
             true
         }
     }
+
 
     override fun getItemCount(): Int {
         return alarmList.size
