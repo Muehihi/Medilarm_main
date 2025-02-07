@@ -56,6 +56,7 @@ class HomePage : AppCompatActivity() {
         btnshelf.setOnClickListener {
             startActivity(Intent(this, ShelfActivity::class.java))
         }
+
     }
 
     private fun loadUserAlarms() {
