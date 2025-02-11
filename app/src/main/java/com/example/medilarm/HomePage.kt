@@ -4,6 +4,7 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
@@ -22,21 +23,34 @@ class HomePage : AppCompatActivity() {
     private var alarmList: MutableList<AlarmData> = mutableListOf()
     private val db = FirebaseFirestore.getInstance()
     private val currentUser = FirebaseAuth.getInstance().currentUser
+    private lateinit var welcomeText: TextView
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_home_page)
+
+        // Initialize the welcome TextView
+        welcomeText = findViewById(R.id.alarm)
+
+        // First handle the window insets
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+            insets  // Make sure to return the insets
         }
 
+        // Then load user data and set up the UI
+        loadUserName()
+
         recyclerView = findViewById(R.id.recyclerView)
-        alarmAdapter = AlarmAdapter(alarmList, { position -> showDeleteConfirmationDialog(position) }) { position, isEnabled ->
-            updateAlarmStatusInFirebase(position, isEnabled)
-        }
+        alarmAdapter = AlarmAdapter(
+            alarmList,
+            { position -> showDeleteConfirmationDialog(position) },
+            { position, isEnabled -> updateAlarmStatusInFirebase(position, isEnabled) },
+            { position -> editAlarm(position) }
+        )
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = alarmAdapter
 
@@ -56,7 +70,6 @@ class HomePage : AppCompatActivity() {
         btnshelf.setOnClickListener {
             startActivity(Intent(this, ShelfActivity::class.java))
         }
-
     }
 
     private fun loadUserAlarms() {
@@ -72,14 +85,38 @@ class HomePage : AppCompatActivity() {
                     val hour = document.getLong("hour")?.toInt() ?: 0
                     val minute = document.getLong("minute")?.toInt() ?: 0
                     val isEnabled = document.getBoolean("isAlarmEnabled") ?: true
+                    val type = document.getString("type") ?: ""
 
-                    val alarm = AlarmData(medicineName, dosage, hour, minute, isEnabled)
+                    // Convert selected days to List<Int>
+                    val selectedDays = (document.get("selectedDays") as? List<*>)?.mapNotNull {
+                        when (it) {
+                            is Long -> it.toInt()
+                            is Int -> it
+                            else -> null
+                        }
+                    } ?: listOf()
+
+                    // Get start and end dates
+                    val startDate = document.getLong("startDate")
+                    val endDate = document.getLong("endDate")
+
+                    val alarm = AlarmData(
+                        medicineName = medicineName,
+                        dosage = dosage,
+                        hour = hour,
+                        minute = minute,
+                        isAlarmEnabled = isEnabled,
+                        type = type,
+                        selectedDays = selectedDays,
+                        startDate = startDate,
+                        endDate = endDate
+                    )
                     alarmList.add(alarm)
                 }
                 alarmAdapter.notifyDataSetChanged()
             }
-            .addOnFailureListener {
-                Toast.makeText(this, "Failed to load alarms.", Toast.LENGTH_SHORT).show()
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Failed to load alarms: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -160,7 +197,70 @@ class HomePage : AppCompatActivity() {
             }
     }
 
+    private fun editAlarm(position: Int) {
+        val alarm = alarmList[position]
+        val userId = currentUser?.uid ?: return
 
+        // First get the full alarm data from Firestore
+        db.collection("users").document(userId).collection("alarms")
+            .whereEqualTo("medicineName", alarm.medicineName)
+            .whereEqualTo("dosage", alarm.dosage)
+            .whereEqualTo("hour", alarm.hour)
+            .whereEqualTo("minute", alarm.minute)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    val document = documents.first()
+                    val intent = Intent(this, Alarm::class.java).apply {
+                        putExtra("isEditing", true)
+                        putExtra("medicineName", document.getString("medicineName"))
+                        putExtra("dosage", document.getString("dosage"))
+                        putExtra("hour", document.getLong("hour")?.toInt())
+                        putExtra("minute", document.getLong("minute")?.toInt())
+                        putExtra("isAlarmEnabled", document.getBoolean("isAlarmEnabled") ?: true)
+                        putExtra("type", document.getString("type"))
 
+                        // Convert the selected days to ArrayList<Int>
+                        val selectedDays = (document.get("selectedDays") as? List<*>)?.mapNotNull {
+                            when (it) {
+                                is Long -> it.toInt()
+                                is Int -> it
+                                else -> null
+                            }
+                        } ?: listOf()
+                        putIntegerArrayListExtra("selectedDays", ArrayList(selectedDays))
+
+                        putExtra("startDate", document.getLong("startDate"))
+                        putExtra("endDate", document.getLong("endDate"))
+                        putExtra("documentId", document.id)
+                    }
+                    startActivity(intent)
+                } else {
+                    Toast.makeText(this, "Could not find alarm details", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error loading alarm details", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun loadUserName() {
+        val userId = currentUser?.uid
+        if (userId != null) {
+            db.collection("users").document(userId)
+                .get()
+                .addOnSuccessListener { document ->
+                    if (document != null) {
+                        val firstName = (document.getString("fname") ?: "User").capitalize()
+                        welcomeText.text = "Welcome $firstName!"
+                    }
+                }
+                .addOnFailureListener {
+                    welcomeText.text = "Welcome!"
+                }
+        } else {
+            welcomeText.text = "Welcome!"
+        }
+    }
 
 }

@@ -66,5 +66,26 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <TextView
+        android:id="@+id/repeatDaysText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="@id/dosageTextView"
+        app:layout_constraintTop_toBottomOf="@id/dosageTextView"
+        tools:text="Repeats on: Mon, Wed, Fri" />
+
+    <TextView
+        android:id="@+id/dateRangeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="@id/repeatDaysText"
+        app:layout_constraintTop_toBottomOf="@id/repeatDaysText"
+        tools:text="From: Jan 1, 2024 To: Dec 31, 2024" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

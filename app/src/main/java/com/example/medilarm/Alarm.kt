@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -48,11 +49,15 @@ class Alarm : AppCompatActivity() {
     private var startDate: Long? = null
     private var endDate: Long? = null
     private var isSelectingStartDate = true
+    private var isEditing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_alarm)
+
+        // Get the isEditing value from intent
+        isEditing = intent.getBooleanExtra("isEditing", false)
 
         // Initialize Firestore and FirebaseAuth
         firestore = FirebaseFirestore.getInstance()
@@ -69,18 +74,6 @@ class Alarm : AppCompatActivity() {
         calendarContainer = findViewById(R.id.calendarContainer)
         calendarOverlay = findViewById(R.id.calendarOverlay)
 
-        // Setup medicine spinner with Firestore data
-        setupMedicineSpinner()
-
-        // Setup type spinner with static data
-        val typeAdapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            arrayOf("Tablet", "Capsule", "Liquid", "Injection")
-        )
-        typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        typeSpinner.adapter = typeAdapter
-
         // Initialize day buttons
         dayButtons = listOf(
             findViewById(R.id.btn_sun),
@@ -91,6 +84,23 @@ class Alarm : AppCompatActivity() {
             findViewById(R.id.btn_fri),
             findViewById(R.id.btn_sat)
         )
+
+        // Setup medicine spinner and other initializations
+        setupMedicineSpinner {
+            // This callback will be called after the medicine spinner is populated
+            if (isEditing) {
+                populateFieldsWithExistingData()
+            }
+        }
+
+        // Setup type spinner with static data
+        val typeAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            arrayOf("Tablet", "Capsule", "Liquid", "Injection")
+        )
+        typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        typeSpinner.adapter = typeAdapter
 
         // Set up day button listeners
         dayButtons.forEachIndexed { index, button ->
@@ -217,12 +227,11 @@ class Alarm : AppCompatActivity() {
     }
 
     private fun formatDate(timeInMillis: Long): String {
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timeInMillis
-        return android.text.format.DateFormat.format("MMMM dd, yyyy", calendar).toString()
+        val dateFormat = android.text.format.DateFormat.getMediumDateFormat(this)
+        return dateFormat.format(timeInMillis)
     }
 
-    private fun setupMedicineSpinner() {
+    private fun setupMedicineSpinner(onComplete: () -> Unit) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid
         if (userId != null) {
             firestore.collection("users")
@@ -238,14 +247,6 @@ class Alarm : AppCompatActivity() {
                         }
                     }
 
-                    if (medicineNames.isEmpty()) {
-                        Toast.makeText(
-                            this,
-                            "No medicines found. Please add medicines first.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-
                     val adapter = ArrayAdapter(
                         this,
                         android.R.layout.simple_spinner_item,
@@ -253,6 +254,7 @@ class Alarm : AppCompatActivity() {
                     )
                     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                     medicineSpinner.adapter = adapter
+                    onComplete() // Call the callback after spinner is populated
                 }
                 .addOnFailureListener { exception ->
                     Toast.makeText(
@@ -261,12 +263,60 @@ class Alarm : AppCompatActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-        } else {
-            Toast.makeText(
-                this,
-                "Please sign in to view medicines",
-                Toast.LENGTH_SHORT
-            ).show()
+        }
+    }
+
+    private fun populateFieldsWithExistingData() {
+        intent.let { intent ->
+            // Set medicine name
+            val medicineName = intent.getStringExtra("medicineName")
+            val medicinePosition = (0 until medicineSpinner.count).firstOrNull {
+                medicineSpinner.getItemAtPosition(it).toString() == medicineName
+            } ?: 0
+            medicineSpinner.setSelection(medicinePosition)
+
+            // Set dosage
+            dosageEditText.setText(intent.getStringExtra("dosage"))
+
+            // Set time
+            timePicker.hour = intent.getIntExtra("hour", 0)
+            timePicker.minute = intent.getIntExtra("minute", 0)
+
+            // Set type
+            val type = intent.getStringExtra("type")
+            val typePosition = when (type) {
+                "Tablet" -> 0
+                "Capsule" -> 1
+                "Liquid" -> 2
+                "Injection" -> 3
+                else -> 0
+            }
+            typeSpinner.setSelection(typePosition)
+
+            // Set selected days
+            val selectedDaysList = intent.getIntegerArrayListExtra("selectedDays") ?: ArrayList()
+            selectedDays.clear()
+            selectedDays.addAll(selectedDaysList)
+
+            // Update day button appearances
+            dayButtons.forEachIndexed { index, button ->
+                if (selectedDays.contains(index)) {
+                    button.setBackgroundColor(resources.getColor(android.R.color.holo_blue_dark, theme))
+                } else {
+                    button.setBackgroundColor(resources.getColor(android.R.color.darker_gray, theme))
+                }
+            }
+
+            // Set dates
+            startDate = intent.getLongExtra("startDate", 0)
+            if (startDate != 0L) {
+                startDateText.text = formatDate(startDate!!)
+            }
+
+            endDate = intent.getLongExtra("endDate", 0)
+            if (endDate != 0L) {
+                endDateText.text = formatDate(endDate!!)
+            }
         }
     }
 
@@ -280,67 +330,29 @@ class Alarm : AppCompatActivity() {
         }
     }
 
-    private fun setOneTimeAlarm(hour: Int, minute: Int, medicineName: String, dosage: String) {
-        val alarmManager = getSystemService(AlarmManager::class.java) as AlarmManager
-
-        val alarmIntent = Intent(this, AlarmReceiver::class.java)
-        alarmIntent.putExtra("medicineName", medicineName)
-        alarmIntent.putExtra("dosage", dosage)
-        if (endDate != null) {
-            alarmIntent.putExtra("endDate", endDate)
-        }
-
-        val pendingIntent = PendingIntent.getBroadcast(
-            this,
-            REQUEST_CODE,
-            alarmIntent,
-            PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, hour)
-        calendar.set(Calendar.MINUTE, minute)
-        calendar.set(Calendar.SECOND, 0)
-
-        // If start date is set, use it
-        if (startDate != null) {
-            val startCalendar = Calendar.getInstance()
-            startCalendar.timeInMillis = startDate!!
-            startCalendar.set(Calendar.HOUR_OF_DAY, hour)
-            startCalendar.set(Calendar.MINUTE, minute)
-            startCalendar.set(Calendar.SECOND, 0)
-
-            if (startCalendar.timeInMillis > System.currentTimeMillis()) {
-                calendar.timeInMillis = startCalendar.timeInMillis
-            }
-        } else if (calendar.timeInMillis < System.currentTimeMillis()) {
-            calendar.add(Calendar.DAY_OF_MONTH, 1)
-        }
-
-        alarmManager.set(
-            AlarmManager.RTC_WAKEUP,
-            calendar.timeInMillis,
-            pendingIntent
-        )
-    }
-
     private fun setRepeatingAlarm(hour: Int, minute: Int, medicineName: String, dosage: String) {
         val alarmManager = getSystemService(AlarmManager::class.java) as AlarmManager
 
         selectedDays.forEach { dayOfWeek ->
-            val alarmIntent = Intent(this, AlarmReceiver::class.java)
-            alarmIntent.putExtra("medicineName", medicineName)
-            alarmIntent.putExtra("dosage", dosage)
-            if (endDate != null) {
-                alarmIntent.putExtra("endDate", endDate)
+            val alarmIntent = Intent(this, AlarmReceiver::class.java).apply {
+                putExtra("medicineName", medicineName)
+                putExtra("dosage", dosage)
+                if (endDate != null) {
+                    putExtra("endDate", endDate)
+                }
+                // Add unique identifier for this specific day's alarm
+                putExtra("alarmId", "${medicineName}_${hour}_${minute}_${dayOfWeek}")
             }
 
-            val requestCode = REQUEST_CODE + dayOfWeek
+            // Create a unique request code for each day
+            // Combine hour, minute, and day to create a unique code
+            val requestCode = (hour * 10000) + (minute * 100) + dayOfWeek
+
             val pendingIntent = PendingIntent.getBroadcast(
                 this,
                 requestCode,
                 alarmIntent,
-                PendingIntent.FLAG_IMMUTABLE
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
             val calendar = Calendar.getInstance()
@@ -353,6 +365,8 @@ class Alarm : AppCompatActivity() {
             calendar.set(Calendar.HOUR_OF_DAY, hour)
             calendar.set(Calendar.MINUTE, minute)
             calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+
 
             // Set to the next occurrence of this day
             while (calendar.get(Calendar.DAY_OF_WEEK) != dayOfWeek + 1 ||
@@ -360,12 +374,95 @@ class Alarm : AppCompatActivity() {
                 calendar.add(Calendar.DAY_OF_WEEK, 1)
             }
 
-            alarmManager.setRepeating(
+            try {
+                alarmManager.setRepeating(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    AlarmManager.INTERVAL_DAY * 7, // Repeat weekly
+                    pendingIntent
+                )
+
+                // Log for debugging
+                Log.d("AlarmSetup", "Set repeating alarm for day $dayOfWeek at $hour:$minute with request code $requestCode")
+            } catch (e: Exception) {
+                Log.e("AlarmSetup", "Error setting alarm: ${e.message}")
+                Toast.makeText(this, "Error setting alarm for ${getDayName(dayOfWeek)}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun getDayName(dayIndex: Int): String {
+        return when (dayIndex) {
+            0 -> "Sunday"
+            1 -> "Monday"
+            2 -> "Tuesday"
+            3 -> "Wednesday"
+            4 -> "Thursday"
+            5 -> "Friday"
+            6 -> "Saturday"
+            else -> "Unknown"
+        }
+    }
+
+    // Also update the one-time alarm setup to use a unique request code
+    private fun setOneTimeAlarm(hour: Int, minute: Int, medicineName: String, dosage: String) {
+        val alarmManager = getSystemService(AlarmManager::class.java) as AlarmManager
+
+        val alarmIntent = Intent(this, AlarmReceiver::class.java).apply {
+            putExtra("medicineName", medicineName)
+            putExtra("dosage", dosage)
+            if (endDate != null) {
+                putExtra("endDate", endDate)
+            }
+            putExtra("alarmId", "${medicineName}_${hour}_${minute}_oneTime")
+        }
+
+        // Create a unique request code for one-time alarm
+        val requestCode = (hour * 10000) + (minute * 100)
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            requestCode,
+            alarmIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, hour)
+        calendar.set(Calendar.MINUTE, minute)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+
+
+        // If start date is set, use it
+        if (startDate != null) {
+            val startCalendar = Calendar.getInstance()
+            startCalendar.timeInMillis = startDate!!
+            startCalendar.set(Calendar.HOUR_OF_DAY, hour)
+            startCalendar.set(Calendar.MINUTE, minute)
+            startCalendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+
+
+            if (startCalendar.timeInMillis > System.currentTimeMillis()) {
+                calendar.timeInMillis = startCalendar.timeInMillis
+            }
+        } else if (calendar.timeInMillis < System.currentTimeMillis()) {
+            calendar.add(Calendar.DAY_OF_MONTH, 1)
+        }
+
+        try {
+            alarmManager.set(
                 AlarmManager.RTC_WAKEUP,
                 calendar.timeInMillis,
-                AlarmManager.INTERVAL_DAY * 7, // Repeat weekly
                 pendingIntent
             )
+
+            // Log for debugging
+            Log.d("AlarmSetup", "Set one-time alarm at $hour:$minute with request code $requestCode")
+        } catch (e: Exception) {
+            Log.e("AlarmSetup", "Error setting alarm: ${e.message}")
+            Toast.makeText(this, "Error setting one-time alarm", Toast.LENGTH_SHORT).show()
         }
     }
 
