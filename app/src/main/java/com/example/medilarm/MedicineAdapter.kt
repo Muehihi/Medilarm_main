@@ -18,6 +18,7 @@ class MedicineAdapter(
     class MedicineViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.medicineName)
         val countTextView: TextView = itemView.findViewById(R.id.medicineCount)
+        val expirationTextView: TextView = itemView.findViewById(R.id.medicineExpiration)
         val deleteButton: ImageView = itemView.findViewById(R.id.deleteButton)
         val editTextButton: TextView = itemView.findViewById(R.id.editTextButton)  // The TextView for Edit
     }
@@ -32,6 +33,7 @@ class MedicineAdapter(
         val medicine = medicineList[position]
         holder.nameTextView.text = medicine.name
         holder.countTextView.text = "Count: ${medicine.count}"
+        holder.expirationTextView.text = "Expires: ${medicine.expirationDate}"
 
         // Handle delete button click
         holder.deleteButton.setOnClickListener {
