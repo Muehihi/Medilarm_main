@@ -1,6 +1,5 @@
 package com.example.medilarm
 
-import android.content.Intent
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -16,8 +15,6 @@ class AlarmAdapter(
     private val onToggleAlarm: (Int, Boolean) -> Unit
 ) : RecyclerView.Adapter<AlarmAdapter.AlarmViewHolder>() {
 
-
-
     class AlarmViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val medicineNameTextView: TextView = view.findViewById(R.id.medicineNameTextView)
         val dosageTextView: TextView = view.findViewById(R.id.dosageTextView)
@@ -25,8 +22,6 @@ class AlarmAdapter(
         val amPmTextView: TextView = view.findViewById(R.id.amPmTextView)
         val alarmSwitch: SwitchCompat = view.findViewById(R.id.alarmSwitch)
     }
-
-
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlarmViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_alarm, parent, false)

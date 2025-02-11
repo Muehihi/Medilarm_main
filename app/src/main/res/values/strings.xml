@@ -55,4 +55,5 @@
     <string name="full_name">full Name</string>
     <string name="name">Name</string>
     <string name="mon">Mon</string>
+    <string name="amount">amount to take</string>
 </resources>

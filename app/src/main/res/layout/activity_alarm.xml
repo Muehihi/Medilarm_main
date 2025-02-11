@@ -43,7 +43,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.118"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/medicineSpinner" />
+        app:layout_constraintTop_toBottomOf="@+id/medicineSpinner"
+        tools:ignore="HardcodedText" />
 
     <!-- Dosage EditText -->
     <EditText
@@ -51,7 +52,9 @@
         android:layout_width="150dp"
         android:layout_height="56dp"
         android:layout_marginTop="48dp"
+        android:autofillHints="number or amount "
         android:background="@android:drawable/editbox_background_normal"
+        android:hint="@string/amount"
         android:inputType="number"
         android:padding="12dp"
         android:textColor="@color/black"
@@ -60,7 +63,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.164"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/medicineSpinner" />
+        app:layout_constraintTop_toBottomOf="@+id/medicineSpinner"
+        tools:ignore="LabelFor" />
 
     <!-- Type Label -->
 
@@ -79,6 +83,7 @@
         app:layout_constraintTop_toBottomOf="@+id/medicineSpinner" />
 
     <!-- TimePicker for Alarm -->
+
     <Spinner
         android:id="@+id/type"
         android:layout_width="150dp"
@@ -87,16 +92,20 @@
         android:backgroundTint="#FFFFFF"
         android:padding="12dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.85"
+        app:layout_constraintHorizontal_bias="0.854"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView4" />
+
+    <!-- Back Button -->
+
+    <!-- Alarm Label -->
 
     <TimePicker
         android:id="@+id/timePicker"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="124dp"
         android:amPmTextColor="@color/black"
         android:numbersBackgroundColor="@color/black"
         android:numbersInnerTextColor="@color/black"
@@ -104,13 +113,10 @@
         android:numbersTextColor="@color/black"
         android:timePickerMode="spinner"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.496"
+        app:layout_constraintHorizontal_bias="0.493"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/type" />
 
-    <!-- Back Button -->
-
-    <!-- Alarm Label -->
     <ImageView
         android:id="@+id/btn_back"
         android:layout_width="49dp"
@@ -137,18 +143,184 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+
+    <!-- Day Selection Buttons -->
+
     <Button
         android:id="@+id/btn_save"
         android:layout_width="220dp"
         android:layout_height="54dp"
-        android:layout_marginTop="92dp"
+        android:layout_marginTop="228dp"
         android:backgroundTint="#4285F4"
         android:text="@string/save"
         android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintHorizontal_bias="0.494"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/timePicker" />
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        style="?android:attr/buttonBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/timePicker">
+
+        <Button
+            android:id="@+id/btn_sun"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="55dp"
+            android:layout_height="50dp"
+            android:backgroundTint="#808080"
+            android:textColor="@color/white"
+            android:text="S" />
+
+        <Button
+            android:id="@+id/btn_mon"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="55dp"
+            android:layout_height="50dp"
+            android:backgroundTint="#808080"
+            android:textColor="@color/white"
+            android:text="M" />
+
+        <Button
+            android:id="@+id/btn_tue"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="55dp"
+            android:layout_height="50dp"
+            android:backgroundTint="#808080"
+            android:textColor="@color/white"
+            android:text="T" />
+
+        <Button
+            android:id="@+id/btn_wed"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="55dp"
+            android:layout_height="50dp"
+            android:backgroundTint="#808080"
+            android:textColor="@color/white"
+            android:text="W" />
+
+        <Button
+            android:id="@+id/btn_thu"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="55dp"
+            android:layout_height="50dp"
+            android:backgroundTint="#808080"
+            android:textColor="@color/white"
+            android:text="T" />
+
+        <Button
+            android:id="@+id/btn_fri"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="55dp"
+            android:layout_height="50dp"
+            android:backgroundTint="#808080"
+            android:textColor="@color/white"
+            android:text="F" />
+
+        <Button
+            android:id="@+id/btn_sat"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="55dp"
+            android:layout_height="50dp"
+            android:backgroundTint="#808080"
+            android:textColor="@color/white"
+            android:text="S" />
+    </LinearLayout>
+
+    <!-- Add after the day buttons LinearLayout -->
+
+    <TextView
+        android:id="@+id/startDateLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="44dp"
+        android:text="Start Date:"
+        android:textColor="@color/black"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/linearLayout" />
+
+    <TextView
+        android:id="@+id/startDateText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="Select date (optional)"
+        android:textColor="@color/black"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintStart_toEndOf="@id/startDateLabel"
+        app:layout_constraintTop_toTopOf="@id/startDateLabel" />
+
+    <TextView
+        android:id="@+id/endDateLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:text="End Date:"
+        android:textColor="@color/black"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="@id/startDateLabel"
+        app:layout_constraintTop_toBottomOf="@id/startDateLabel" />
+
+    <TextView
+        android:id="@+id/endDateText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="Select date (optional)"
+        android:textColor="@color/black"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintStart_toEndOf="@id/endDateLabel"
+        app:layout_constraintTop_toTopOf="@id/endDateLabel" />
+
+    <FrameLayout
+        android:id="@+id/calendarContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <View
+            android:id="@+id/calendarOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#80000000"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="8dp">
+
+            <CalendarView
+                android:id="@+id/calendarView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#FFFFFF" />
+
+        </androidx.cardview.widget.CardView>
+
+    </FrameLayout>
+
+    <!-- Calendar Icon -->
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
